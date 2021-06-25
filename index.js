@@ -19,7 +19,7 @@ app.post("/register", async function (req, res) {
         let uniqueEmail = await db.collection("users").findOne({ email: req.body.email });
 
         if (uniqueEmail) {
-            res.status(401).json({
+            res.json({
                 message: "email already exist"
             })
         } else {
@@ -61,12 +61,12 @@ app.post("/login", async function (req, res) {
                     id: user._id
                 })
             } else {
-                res.status(404).json({
+                res.json({
                     message: "Email or password is incorrect"
                 })
             }
         } else {
-            res.status(404).json({
+            res.json({
                 message: "Email or password is incorrect"
             })
         }
@@ -83,7 +83,7 @@ app.post("/recregister", async function (req, res) {
         let uniqueEmail = await db.collection("recruiter").findOne({ email: req.body.email });
 
         if (uniqueEmail) {
-            res.status(401).json({
+            res.json({
                 message: "email already exist"
             })
         } else {
@@ -125,12 +125,12 @@ app.post("/reclogin", async function (req, res) {
                     id: user._id
                 })
             } else {
-                res.status(404).json({
+                res.json({
                     message: "Email or password is incorrect"
                 })
             }
         } else {
-            res.status(404).json({
+            res.json({
                 message: "Email or password is incorrect"
             })
         }
