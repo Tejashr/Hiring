@@ -259,11 +259,19 @@ app.post("/apply", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
-        await db.collection("appliedjobs").insertOne(req.body);
+        let unique = await db.collection("appliedjobs").findOne({ unique: req.body.unique});
+        if (unique) {
+            res.json({
+                message: "Already applied to this job"
+            })
+        } else{
+            await db.collection("appliedjobs").insertOne(req.body);
             await connection.close();
             res.json({
-                message: "job applied"
+                message:"job applied"
             })
+        }
+       
       
     } catch (error) {
         console.log(error)
