@@ -11,11 +11,14 @@ require('dotenv').config();
 app.use(cors())
 app.use(express.json());
 
+
+//posting the candidate registration details
 app.post("/register", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
 
+        //check wheater email is unique
         let uniqueEmail = await db.collection("users").findOne({ email: req.body.email });
 
         if (uniqueEmail) {
@@ -27,8 +30,10 @@ app.post("/register", async function (req, res) {
 
             let hash = await bcrypt.hash(req.body.password, salt);
 
+            //encrypting the paasword using bycrypt 
             req.body.password = hash;
 
+            //inserting deatails of candidates 
             let users = await db.collection("users").insertOne(req.body);
 
             await connection.close();
@@ -41,18 +46,21 @@ app.post("/register", async function (req, res) {
     }
 })
 
-
+//posting the candidate login details 
 app.post("/login", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
-
+        //finding the email ispresent in the user collection
         let user = await db.collection("users").findOne({ email: req.body.email })
 
         if (user) {
+
+            //comparing the given password and password present in the daatabase
             let isPassword = await bcrypt.compare(req.body.password, user.password);
             if (isPassword) {
-
+                
+                //generating the JWT token
                 let token = jwt.sign({ _id: user._id }, process.env.secret)
 
                 res.json({
@@ -74,12 +82,15 @@ app.post("/login", async function (req, res) {
         console.log(error)
     }
 })
+
+
 // regestration for recruiter
 app.post("/recregister", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
 
+        //check wheater email is unique
         let uniqueEmail = await db.collection("recruiter").findOne({ email: req.body.email });
 
         if (uniqueEmail) {
@@ -91,8 +102,10 @@ app.post("/recregister", async function (req, res) {
 
             let hash = await bcrypt.hash(req.body.password, salt);
 
+            //encrypting the paasword using bycrypt 
             req.body.password = hash;
 
+            //inserting deatails of recruiter 
             let users = await db.collection("recruiter").insertOne(req.body);
 
             await connection.close();
@@ -105,18 +118,21 @@ app.post("/recregister", async function (req, res) {
     }
 })
 
-
+//posting the recrutier login details 
 app.post("/reclogin", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
 
+        //finding the email ispresent in the recruiter collection
         let user = await db.collection("recruiter").findOne({ email: req.body.email })
 
         if (user) {
+            //comparing the given password and password present in the daatabase
             let isPassword = await bcrypt.compare(req.body.password, user.password);
             if (isPassword) {
 
+                //generating the JWT token
                 let token = jwt.sign({ _id: user._id }, process.env.secret)
 
                 res.json({
@@ -171,6 +187,8 @@ app.get("/user/:id", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting user details for the corresponding email
         let user = await db.collection("users").findOne({ email: req.params.id })
         res.json(user)
         await connection.close();
@@ -186,6 +204,8 @@ app.get("/recruiter/:id", async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting recruiter details for the corresponding email
         let user = await db.collection("recruiter").findOne({ email: req.params.id })
         res.json(user)
         await connection.close();
@@ -194,12 +214,15 @@ app.get("/recruiter/:id", async function (req, res) {
 
     }
 })
+
 //posting job details by recruiter
 
 app.post("/company", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //inserting job detaials to companies collection
         await db.collection("companies").insertOne(req.body);
         await connection.close();
         res.json({
@@ -217,6 +240,8 @@ app.get("/recruiters/:id", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting recruiter details for the corresponding id
         let recruiter = await db.collection("recruiter").findOne({ _id: mongodb.ObjectID(req.params.id) })
         res.json(recruiter)
         await connection.close();
@@ -231,6 +256,8 @@ app.get("/users/:id", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting user details for the corresponding id
         let users = await db.collection("users").findOne({ _id: mongodb.ObjectID(req.params.id) })
         res.json(users)
         await connection.close();
@@ -245,6 +272,8 @@ app.get("/job", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting  details of all the jobs
         let companies = await db.collection("companies").find().toArray();
         res.json(companies)
         await connection.close();
@@ -259,12 +288,15 @@ app.post("/apply", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //check wheather the job is applied or not
         let unique = await db.collection("appliedjobs").findOne({ unique: req.body.unique});
         if (unique) {
             res.json({
                 message: "Already applied to this job"
             })
         } else{
+            //post the job details and user details for the appliedjobs collection
             await db.collection("appliedjobs").insertOne(req.body);
             await connection.close();
             res.json({
@@ -285,6 +317,8 @@ app.get("/appliedjob/:id", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting appliedjob details for the corresponding user email
         let jobs = await db.collection("appliedjobs").find({ email: req.params.id}).toArray();
         res.json(jobs)
         await connection.close();
@@ -300,6 +334,8 @@ app.get("/viewcandidates/:id", authenticate, async function (req, res) {
     try {
         let connection = await mongodb.connect(URL);
         let db = connection.db(DB);
+
+        //getting appliedjob details for the corresponding recruiter email
         let jobs = await db.collection("appliedjobs").find({ recemail: req.params.id}).toArray();
         res.json(jobs)
         await connection.close();
